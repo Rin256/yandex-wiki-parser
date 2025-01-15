@@ -1,22 +1,24 @@
+import json
 import os
 import re
-import requests
-from urllib.parse import urljoin
-from datetime import datetime
-import json
 import shutil
+from datetime import datetime
+from urllib.parse import urljoin
+
+import requests
+
+from config import CSRF_TOKEN, YC_SESSION, DIRECTORY
 
 class YandexWikiParser:
     BASE_URL = "https://wiki.yandex.ru/"
     USER_AGENT = "PostmanRuntime/7.39.0"
 
-    def __init__(self, csrf_token, yc_session, directory=""):
-        if directory == "":
-            directory = f"{os.getcwd()}{os.sep}data"
+    def __init__(self):
+        directory = f"{os.getcwd()}{os.sep}data" if DIRECTORY == "" else DIRECTORY
         
         self.__session = requests.Session()
-        self.__cookies = self.__generate_cookies(csrf_token, yc_session)
-        self.__headers = self.__generate_headers(csrf_token)
+        self.__cookies = self.__generate_cookies(CSRF_TOKEN, YC_SESSION)
+        self.__headers = self.__generate_headers(CSRF_TOKEN)
         self.__navigation_tree = {}
         self.__url_pages = []
         self.__url_attachments = []
@@ -172,20 +174,24 @@ class YandexWikiParser:
             os.makedirs(self.__attachments_directory)
 
         for url in self.__url_attachments:
-            response = self.__session.get(url, headers=self.__headers, cookies=self.__cookies)
-            file_name = url.replace(self.BASE_URL, "").replace("/", "\\")
-            file_path = os.path.join(self.__attachments_directory, file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, "wb") as file:
-                file.write(response.content)
-            print(f"Downloaded attachment: {url} -> {file_path}")
+            try:
+                response = self.__session.get(url, headers=self.__headers, cookies=self.__cookies)
+                file_name = url.replace(self.BASE_URL, "").replace("/", "\\")
+                file_path = os.path.join(self.__attachments_directory, file_name)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, "wb") as file:
+                    file.write(response.content)
+                print(f"Downloaded attachment: {url} -> {file_path}")
+
+            except (requests.exceptions.RequestException, OSError, IOError) as e:
+                print(f"Downloading attachment skipped {url} -> {file_path}. Error: {e}")
 
     def __search_attachments(self):
         md_files = self.__get_files(self.__md_directory, ".md")
         for file_path in md_files:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
-                matches = re.findall(r'!\[.*?\]\((\/\S*)', content) + re.findall(r'{% file src="(\/\S*)"', content)
+                matches = re.findall(r'!\[.*?\]\((\/\S*?)[\)\s]', content) + re.findall(r'{% file src="(\/\S*)"', content)
                 full_urls = [urljoin(self.BASE_URL, match) for match in matches]
                 self.__url_attachments.extend(full_urls)
         print(f"Found {len(self.__url_attachments)} attachments")
