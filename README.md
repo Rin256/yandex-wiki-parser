@@ -14,5 +14,5 @@ pip install -r requirements.txt
 
 3. Запустить парсер
 ```python
-python YandexWikiParser.py
+python yandex_wiki_parser.py
 ```
