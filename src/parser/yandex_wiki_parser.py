@@ -187,7 +187,7 @@ class YandexWikiParser:
                 print(f"Downloading attachment skipped {url} -> {file_path}. Error: {e}")
 
     def __search_attachments(self):
-        md_files = self.__get_files(self.__md_directory, ".md")
+        md_files = self.__get_files(self.__md_directory)
         for file_path in md_files:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
