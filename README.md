@@ -5,14 +5,14 @@
 pip install -r requirements.txt
 ```
 
-2. Запустить парсер
-```python
-python YandexWikiParser.py
-```
-
-Ввести в консоль запрашиваемые параметры:
+2. Ввести в config.py параметры:
 - CSRF-TOKEN (необходимо авторизоваться в браузере на сайте https://wiki.yandex.ru/ и скопировать соответствующий cookie)
 - yc_session (необходимо авторизоваться в браузере на сайте https://wiki.yandex.ru/ и скопировать соответствующий cookie)
 - каталог загрузки (если не заполнить, то будет использоваться каталог \data), подкаталог с текущей датой будет сформирован автоматический
 
 Для просмотра cookies в браузере удобно использовать расширение EditThisCookie (https://www.editthiscookie.com/)
+
+3. Запустить парсер
+```python
+python YandexWikiParser.py
+```

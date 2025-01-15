@@ -34,8 +34,8 @@ class YandexWikiParser:
         self.__fetch_navigation_tree()
         self.__download_md()
         self.__download_metadata()
-        self.__copy_pages_for_RAG()
         self.__download_attachments()
+        self.__copy_pages_in_flat()
         
     def __generate_cookies(self, csrf_token, yc_session):
         return {
@@ -176,7 +176,7 @@ class YandexWikiParser:
         for url in self.__url_attachments:
             try:
                 response = self.__session.get(url, headers=self.__headers, cookies=self.__cookies)
-                file_name = url.replace(self.BASE_URL, "").replace("/", "\\")
+                file_name = url.replace(self.BASE_URL, "").replace(os.sep, "\\")
                 file_path = os.path.join(self.__attachments_directory, file_name)
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 with open(file_path, "wb") as file:
@@ -196,40 +196,33 @@ class YandexWikiParser:
                 self.__url_attachments.extend(full_urls)
         print(f"Found {len(self.__url_attachments)} attachments")
 
-    def __copy_pages_for_RAG(self, banned_directory = 'users'):
-        self.__flatten_directory(self.__md_directory, ".md", f"{self.__md_directory}_RAG{os.sep}", 'users')
-        self.__flatten_directory(self.__metadata_directory, ".json", f"{self.__metadata_directory}_RAG{os.sep}", 'users')
-        print(f"Copied pages for RAG")
+    def __copy_pages_in_flat(self, baned_directory = 'users'):
+        postfix = '_flat'
+        self.__flatten_directory(self.__md_directory, f"{self.__md_directory}{postfix}{os.sep}", baned_directory)
+        self.__flatten_directory(self.__metadata_directory, f"{self.__metadata_directory}{postfix}{os.sep}", baned_directory)
+        self.__flatten_directory(self.__attachments_directory, f"{self.__attachments_directory}{postfix}{os.sep}", baned_directory)
+        print(f"Copied pages in flat structure")
     
-    def __flatten_directory(self, directory, extension, destination_directory, skip_directory):
+    def __flatten_directory(self, directory, destination_directory, baned_directory):
         os.makedirs(os.path.dirname(destination_directory), exist_ok=True)
-        found_files = self.__get_files(directory, extension)
+        found_files = self.__get_files(directory)
         for file_path in found_files:
-            if skip_directory in file_path.split(os.sep):
+            if baned_directory in file_path.split(os.sep):
                 continue
 
             flat_filename = os.path.relpath(file_path, start = directory).replace(os.sep, '_')
             shutil.copy(file_path, os.path.join(destination_directory, flat_filename))
 
-    def __get_files(self, directory, extension):
+    def __get_files(self, directory):
         found_files = []
         for root, _, files in os.walk(directory):
             for file_name in files:
-                if file_name.endswith(extension):
-                    found_files.append(os.path.join(root, file_name))
+                found_files.append(os.path.join(root, file_name))
         return found_files
 
 def main():
-    # csrf_token = "1a61a3ed7d30bbad486409c6bcc1edf24e74a54e%3A1720980869"
-    # yc_session = "c1.9euelZqUj43Hk4vKnJWLmJqOnI6ezu3rnpWazpGKls7GzcmQzYqKlp7Lx8zl9Pd8VC9L-e94MH2q3fT3HCwuS_nveDB9qtXo9fKGnNGQnoqLl9GIlpSW7fmQj5qRlpvN1_XbycfLz5rGyMjSzM3OzNLLz83I0seayM3Sx87Kz87IxsnGmZme7_7F656VmpKXyZOVnJHIzcnHnZuejJXM.Twg1PcnfU63jEOR1lmHz0s80q5Bx4uXjMa6FtCzB_q87zHqlMMqHFad8-8r3ha8JGGwpjI0LdQR3k_LkABEZBg"
-    # directory = ""
-
-    csrf_token = input("Введите CSRF-TOKEN: ")
-    yc_session = input("Введите yc_session: ")
-    directory = input("Введите каталог загрузки: ")
-    
     try:
-        parser = YandexWikiParser(csrf_token, yc_session, directory)
+        parser = YandexWikiParser()
         parser.create_backup()
 
     except ValueError as e:
