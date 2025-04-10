@@ -108,6 +108,7 @@ class YandexWikiParser:
 
         for url in self.__url_pages:
             response = self.__session.get(url, headers=self.__headers, cookies=self.__cookies)
+            response.encoding = 'utf-8'
             match = re.search(r'"content":"(.*?)","owner":', response.text)
             if not match:
                 print(f"Downloading page markdown skipped: {url}")
