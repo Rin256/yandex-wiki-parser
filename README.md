@@ -1,6 +1,8 @@
 ﻿# Подготовка
 
-1. Установить python (https://www.python.org/downloads/)
+1. Установить python (https://www.python.org/downloads/).
+В начале установки проставить галочку "Add python to PATH", остальное оставить по умолчанию.
+
 2. Запустить подготовку с помощью init.bat
 
 # Использование
